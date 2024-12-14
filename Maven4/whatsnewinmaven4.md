@@ -77,6 +77,9 @@ The following table shows a rough comparison about which content is available in
 | Project information / environment settings |     ✅     |      ✅       |
 | Deployment to remote repository            |     ✅     |      ✅       |
 
+**Warning**: There are rare situations, where Maven 4 might produce a Consumer-POM based on version 4.1.0, e.g. when condition based profiles (see below) can't be transformed to version 4.0.0.
+Maven will show a warning in such situations.
+
 
 ### Declaring the root directory and directory variables
 Everytime a Maven build is executed it has to determine the projects root so identify things like the parent project, directory information and so on.
@@ -212,7 +215,7 @@ Maven 4 introduces a "fail on severity" build parameter, which will break the bu
 The parameter can either be used by its full name (`--fail-on-severity`) or as a short handle (`-fos`).
 The parameter is followed by an argument of a log level severity, e.g. `WARN`.
 
-### Optional profiles
+### Improvements to profiles
 Trying to use a nonexistent profile in a build causes the build to fail, as the following command line snippet shows:
 
 ```
@@ -236,6 +239,10 @@ See the following snippet for an example:
 [INFO] ----------------------------------------------------------------------------------------------------------------
 [INFO] The requested optional profiles [nonexistent] could not be activated or deactivated because they do not exist.
 ```
+
+Maven 4 also introduces more and flexible ways to activate profiles, by providing condition based activation.
+See [MNG-8286][27] for more information about supported functions.
+
 
 ### Lifecycle changes
 
@@ -302,3 +309,4 @@ If you want to see issues resolved in each single (alpha/beta/RC) release, pleas
 [24]: https://issues.apache.org/jira/browse/MNG-7836
 [25]: https://github.com/apache/maven-hocon-extension
 [26]: https://maven.apache.org/maven-jsr330.html
+[27]: https://issues.apache.org/jira/browse/MNG-8286
