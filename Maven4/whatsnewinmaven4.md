@@ -27,35 +27,44 @@ Maven 4 will therefore differentiate between a "Build-POM" and a "Consumer-POM".
 As names suggest the "Build-POM" will contain all information needed for to build the artifact, e.g. used plugins and their configuration, while the "Consumer-POM", which is created during the Maven build, will not contain those.
 This POM will only keep those which are really needed to use the artifact, e.g. dependency information.
 
-**Note**: See below for a comparison of the content of both POMs. 
-
+**Note**: See below for a comparison of the content of both POMs.
 
 ### Model version 4.1.0
 With now having two types of POM Maven 4 can already make the additions to the Build-POM as it will only be used by Maven (and of course IDEs).
 Therefor with Maven 4 a new Model version 4.1.0 is introduced.
 This version introduces some new elements and attributs, while others got marked as deprecated.
 To not break the ecosystem ist version is only available for the Build-POM, while the Consumer-POM will still use version 4.0.0.
+This means Maven will generate the Consumer-POM during the build. 
+
+**Note**: Maven 4 will of course continue to build your model version 4.0.0 project!
+There is no need to update your POMs to 4.1.0 as long as you don't want to make use of the new features.
+But as like every software update - it's suggested to update them to 4.1.0, e.g. to avoid problems when deprecated things get removed in future updates.
+ 
 
 ### Modules are now subprojects
 From the early days of Maven 1 till today, all build information are stored in the POM, short for "Project Object Model".
 Together with build folders and other files the wording "Maven project" is used.
 However, project containing multiple parts, e.g. an API and a client, each of those parts was called "module" and listed in the `<modules>` section of the POM, leading to the terms of "multi-module project".
-This wording introduced some inconsistency, esp. as projects with any `<modules>` section are often called "single-module".
-Since the introduction of the [Java Platform Module System][3] in Java 9 the term "module" raised additional confusion
+This wording introduced some inconsistency, especially as projects with any `<modules>` section are often called "single-module".
+Since the introduction of the [Java Platform Module System][3] in Java 9 the term "module" raised additional confusion.
 
 Maven 4 gets rid of this by naming "modules" as what they are - subprojects.
 Model version 4.1.0 contains a new element `<subprojects>`analogous to the now deprecated, but still usable, element `<modules>`.
 
+**Note**: It's suggested to use the terms `multi-project setup` and `single-project setup` to differentiate between a Maven project with or without subprojects. 
+
 ### New packaging type: bom
-Maven 4 introduces a dedicated packaging type to provide a [Bill of Material BOM][4] called "bom".
+Maven 4 introduces a dedicated packaging type to provide a [Bill of Material BOM][4] called "bom" to differentiate more precisely between "parent POMs" and dependency managing BOMs.
 While the new type is only available with model Version 4.1.0 the final outcome is a full Maven 3 compatible (model 4.0.0) POM file!
 For an example see the link above or the [live coding by Maven maintainer Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
+
+**Note**: With Maven 4 it's also possible to exclude dependencies which are declared by BOMs using the existing `<exclusions>` element.
 
 ### Comparing Build-POM and Consumer-POM
 The following table shows a rough comparison about which content is available in which POM type when using Maven 4.
 
 **Notes**:
-* The column "Consumer-POM" obviously does not apply for artefacts that are of type "pom" or "bom"!
+* The column "Consumer-POM" obviously does not apply for artefacts that are of type "pom"!
 * Some of the build-related content which is (as of now) still available in the Consumer-POM might be available only in the Build-POM in the future. 
 
 | Content                                    | Build-POM | Consumer-POM |
@@ -96,6 +105,12 @@ Keep in mind that the root directory of the whole project (when considering mult
 **Note:** In the past some people "hacked" workarounds for the`rootDirectory` variables, mostly by using internal variables.
 Starting with Maven 4 those "hacks" will most probably not work anymore, because some of those variables were removed or at least marked as deprecated.
 See JIRA issue [MNG-7038][15] and the related [Pull Request for MNG-7038][16] for more information.
+
+### Alternate POM syntaxes
+While the syntax for the 4.0.0 Consumer-POM is set in stone for accessing central repository, the Build-POM should be able to evolve.
+This includes allowing the use of alternate syntaxes, by having Maven 4 providing a ModelParser SPI ([MNG-7836][24]), which can be implemented as a core extension and allow the usage of a different file as the POM and allow a custom syntax.
+
+One of the first projects which uses this features is the [Apache Maven Hocon Extension][25].
 
 
 ## Improvements for subprojects
@@ -165,11 +180,11 @@ This was finally changed in Maven 4 to the way most users are expecting:
 Only deploy when all subprojects were build successfully.
 
 
-## Workflow and runtime changes
+## Workflow, lifecycle and runtime changes
 
 ### Java 17 required to run Maven
-The required Java version to run Maven 4 will be Java 17 
-This allows Maven (and its maintainers) to make use of newer language features and improvements brought by the JDK.
+The required Java version to run Maven 4 will be Java 17.
+This not only allows Maven (and its maintainers) to make use of newer language features and improvements brought by the JDK, but also comes with a more secure runtime as Java 17 includes more security features earlier versions.
 
 **Important note**: Java 17 will only be needed to **run Maven**!
 You will still be able to compile against older Java versions using the same [compiler plugin configuration][6] as before!
@@ -177,6 +192,19 @@ If this does not fit your requirements, because you need to compile against or u
 
 *Side information: The ballot about the required Java version was hold in March 2024, shortly before Java 22 was released.
 One reason Java 17 was chosen over Java 21, because it was (at this time) the second last Java version for which many vendors offer long-term-support.*
+
+### Application maintenance
+As with every update, especially major ones, large application maintenance happens, containing huge code, API and dependency updates and even removals.
+For example the "Plexus Containers" dependency injection was removed - after being deprecated since Maven 3.2 (2010)!
+Code updates contain not only usages of newer Java language features, but also changes to make maintenance easier and less time-consuming. 
+This also includes removing things that either never should have worked or were only kept for backward-compatibility already in Maven 3, e.g. using `${pom.*}` expressions.
+Maven own Super POM was also upgrading, which declares new default versions of Maven's core plugins.
+
+**Note**: Due upgrading the default versions of Maven plugins, your build might behave different that before, even if you didn't purposely change anything.
+To avoid this situation you should always define fixed versions of all the plugins you use!
+By doing this you are in control of your build - at the costs of being responsible to upgrade the versions yourself.
+Maven 4 will issue a warning if you rely on default versions defined in Maven's Super POM!
+
 
 ### "Fail on severity" parameter
 Maven 4 introduces a "fail on severity" build parameter, which will break the build when at least one log message matches the given argument.
@@ -209,21 +237,41 @@ See the following snippet for an example:
 [INFO] The requested optional profiles [nonexistent] could not be activated or deactivated because they do not exist.
 ```
 
+### Lifecycle changes
+
+#### Lifecycle changed from graph to tree
+Up to Maven 3 the lifecycle was mathematical graph.
+This changed with Maven 4 where the lifecycle is defined as a tree of phases.
+This allows a more consistent execution of dependent phases, e.g. `compile` must execute after `compile-only` project dependencies have reached the `ready` phase, but also "skipping" phases (in comparison to the old graph), e.g. `deploy` an artifact without `install`ing it to the user repository.
+
+#### Pre- and post-phases, ordering of executions  
+Every lifecycle phase now has a `before` and `after` phase, allowing plugins to bind themselves to those by adding their prefixes to the name of the main phase name.
+For example, if you want to set up test data before running your integration test you could execute stuff during the `before-integration-test` phase.
+
+If this is not enough, maybe because you want to do multiple things inside the same phase, you can order each execution inside a phase by using square brackets with an Integer at the end of the phase name, e.g.
+```
+before-integration-test[100]
+before-integration-test[200]
+```
+
+**Warning**: The conceptional `pre-*` and `post-*` phases, wich were only available to selected phases and homogeneously named are deprecated - don't use them (anymore)!
+This becomes even more important when you were binding a plugin to the `post-*` phase of a lifecycle phase, because the `pre-*` phase of the phase you really would like to bind to did not exist, e.g. binding to `process-resources` phase, because there was no `pre-compile`one.
+
+
 ## Maven plugins and dependencies
-As written in the introduction, Maven 4 will contain huge code and API updates (not only because Java 17 language features can be used) and even removals, resulting in breaking very old Maven plugins, which were not updated to the recommended APIs.
-For example the "Plexus Containers" dependency was removed - after being deprecated since Maven 3.2 (2010)!
+As written above Maven 4 will contain huge code and API updates, resulting in breaking (very) old Maven plugins, which were not updated to the recommended APIs.
+Major changes regarding plugins contain a now proper immutable plugin model together with a changed plugin API.
+The updated API provides hints as a preparation for Maven 4.
+You can enable them passing the following argument to your build: `-Dmaven.plugin.validation=verbose`.
+You should also only rely on the official Maven BOMs when developing plugins.
+If a plugin still relies on long time deprecated and now removed Plexus dependency resolution, it will no longer work and needs to be updated to JSR-330 - see [Maven & JSR-330][26] for further information.
 
-If you are maintaining a Maven plugin, you should test it with Maven 3.9.x and have a close look at the warnings.
+**Advice**: If you are maintaining a Maven plugin, you should test it with Maven 3.9.x, have a close look at upcoming warnings and update the plugin.
 
-
-
-# Issue overview
+## Issue overview
 The Maven issue tracker provides a [full list of all resolved issues of Maven 4.0.0][22].
 As of 2024-12-14 not all issues are properly linked to the final release and therefore may not be shown in that list.
 If you want to see issues resolved in each single (alpha/beta/RC) release, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
-
-
-
 
 
 <!--- Links -->
@@ -250,3 +298,7 @@ If you want to see issues resolved in each single (alpha/beta/RC) release, pleas
 [20]: https://www.mojohaus.org/flatten-maven-plugin/
 [21]: https://blog.soebes.io/posts/2024/03/2024-03-31-maven-4-part-i/
 [22]: https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12316922&version=12346477
+[23]: https://issues.apache.org/jira/browse/MNG-7879
+[24]: https://issues.apache.org/jira/browse/MNG-7836
+[25]: https://github.com/apache/maven-hocon-extension
+[26]: https://maven.apache.org/maven-jsr330.html
