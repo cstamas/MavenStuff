@@ -1,5 +1,7 @@
 # What's new in Maven 4?
 
+> **THIS IS A DRAFT AND THEREFOR WORK IN PROGRESS ARTCILE**
+
 Maven is more than 20 years old and is one of the most used build-tool in the Java world.
 Since all the years one important rule was the highest backward-compatibility as possible, especially with its [POM-schema with Model version 4.0.0][2], used for the build itself, but also by consumers.
 This made Maven more than a tool, but a whole ecosystem with a lot of things depended on the POM, esp. the Maven Central repository, other build tools and IDEs.
@@ -48,15 +50,7 @@ Model version 4.1.0 contains a new element `<subprojects>`analogous to the now d
 ### New packaging type: bom
 Maven 4 introduces a dedicated packaging type to provide a [Bill of Material BOM][4] called "bom".
 While the new type is only available with model Version 4.1.0 the final outcome is a full Maven 3 compatible (model 4.0.0) POM file!
-See the link above for an example or the [live coding by Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
-
-### Declaring the root project
-
-TOOD
-
-
-
-
+For an example see the link above or the [live coding by Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
 
 ### Comparing Build-POM and Consumer-POM
 
@@ -78,14 +72,60 @@ The following table shows a rough comparison about which content is available in
 | Deployment to remote repository                         |     ✅     |      ✅       |
 
 
+### Declaring the root directory and directory variables
+Everytime a Maven build is executed it has to determine the projects root so identify things like the parent project, directory information and so on.
+To "help" Maven finding the root folder, you can create a `.mvn` folder in your root directory.
+This folder is intended to contain project specific configuration to run Maven, e.g. a `maven.config` or `jvm.config` file, and therefore was also considered as the root folder.
+With Maven 4 there is a second option to clearly define the root folder.
+Model version 4.1.0, usable for the Build-POM, adds the boolean attribute called `root` in the `<project>` element.
+When this attribute is set to true (default is false) the directory of this POM file is considered the root directory.
+
+Another pain point in relation of the root directly is that until Maven 4 there was no official variable to make use of the root folder in your POM files, e.g. when you want to define the path to a `checkstyle-suppressions.xml` file for the checkstyle plugin.
+Maven 4 now provides official variables to reference the root directory in your POM configuration.
+The following table shows the official variables.
+
+|          Variable          |  Scope  | Definition                                                            | Always |
+|:--------------------------|:-------:|:----------------------------------------------------------------------|:-------------:|
+| `${project.rootDirectory}` | Project | `.mvn` folder or `root` attribute in pom                              |      No       |
+| `${session.topDirectory}`  | Session | Current directory or `--file` argument                                |      Yes      |
+| `${session.rootDirectory}` | Session | `.mvn` folder or `root` attribute in pom for the `topDirecty` project |      No       |
+
+As you can see these variables differentiate by their scope, where `project` is always related to the Maven project's definition (you could interpret this as the POM files) and `session` is the actual execution of a maven build and is therefore related to the folder from where you start Maven.
+As a consequence of the definition it's clear that the `rootDirectory` can only contain a value when either a `.mvn` folder is defined or the `root` attribute is set to true.
+However, if defined it should always have the same value for a given project, whereas the value of the`topDirectory` variable can change depending on the execution point. 
+
+Keep in mind that the root directory of the whole project (when considering multiple subprojects) is different from each subprojects' own base directory, which was and is still accessibly via the `${basedir}` property for the usage in POM files and will always have a value.
+
+**Note:** In the past some people "hacked" workarounds for the`rootDirectory` variables, mostly by using internal variables.
+Starting with Maven 4 those "hacks" will most probably not work anymore, because some of those variables were removed or at least marked as deprecated.
+See JIRA issue [MNG-7038][15] and the related [Pull Request for MNG-7038][16] for more information.
+
+
 ## Improvements for subprojects 
 
 ### Automatic versioning of parents and subprojects
 
-### Further improvements
 
-* Consistent timestamps
-* Deploy all or none
+### Reactor improvements and fixes
+Building a project with multiple subprojects could cause trouble when one subproject was dependent from one of the others and its own build failed for whatever reason.
+Maven was telling the user to (fix the error and then) resume the build with `--resume-from :<nameOfTheFailingSubproject>`, which instantly fails the build again as the needed other subproject couldn't be found (as it was not rebuild too).
+Using `--also-make :<nameOfTheDependendSubproject>` was no help in the past as it was ignored due the ma long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
+**So the "argument" to blindly use `mvn clean install` as a "workaround" for this (never intended) behavior is gone!
+Don't use `mvn clean install`, but `mvn verify` for your regular builds!**
+To improve usability when resuming a failed build you can now use `--resume` or its short parameter `-r` to resume a build from the subproject that last failed.
+So you don't have to manually pass the name of the failed subproject as the starting point to resume from.
+The reactor is now also aware of successfully build subprojects when the overall build failed, and will skip to rebuild those if you resume the build.  
+With Maven 4 it's also aware of subfolder builds [MNG-6118][12], which becomes pretty handy when you only want to execute tools (e.g. Jetty) on/with certain subprojects, but not on every subproject.
+See Maven maintainer Maarten Mulders' article ["Waht's new in maven 4" (2020)][13] for a small example.
+
+### Further improvements
+Further improvements to subprojects will also improve the daily work with those.
+Thanks to [MNG-6754][14] all subprojects will now have consistent timestamps in there packaged archives, while in Maven 3 each subproject was having a different one.
+This should make it easier to identify the archives which belong together.
+When using Maven 3, deploying a project with multiple subprojects could end up in the situation where some (successfully build) subprojects where deployed to the (local or remote) repository, but failed subprojects were obviously not.
+This was finally changed in Maven 4 to the way most users are expecting:
+Only deploy when all subprojects were build successfully.
+
 
 
 
@@ -115,7 +155,7 @@ The parameter is followed by an argument of a log level severity, e.g. `WARN`.
 ## Maven plugins and dependencies
 
 As written in the introduction, Maven 4 will contain huge code and API updates (not only because Java 17 language features can be used) and even removals, resulting in breaking very old Maven plugins, which were not updated to the recommended APIs.
-For example the Plexus Containers dependency was removed - after being deprecated since Maven 3.2 (2010)!
+For example the "Plexus Containers" dependency was removed - after being deprecated since Maven 3.2 (2010)!
 
 If you are maintaining a Maven plugin, you should test it with Maven 3.9.x and have a close look at the warnings.
 
@@ -124,7 +164,7 @@ If you are maintaining a Maven plugin, you should test it with Maven 3.9.x and h
 # Issue overview
 
 The following table shows links to the issues of changes, mentioned here.
-For a full list of all issues, please see the [Maven releases history][10], starting with Maven 4.0.0-alpha-2 (alpha-1 was skipped).
+For a full list of all issues, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
 
 
 TODO.
@@ -133,6 +173,7 @@ TODO.
 |:----------------|:---------:|
 |Build-POM and Consumer-POM|xx|
 | Require Java 17 |[MNG-8061][9]|
+
 
 
 
@@ -149,3 +190,9 @@ TODO.
 [8]: https://maarten.mulders.it/2021/03/introduction-to-maven-toolchains/
 [9]: https://issues.apache.org/jira/projects/MNG/issues/MNG-8061
 [10]: https://maven.apache.org/docs/history.html
+[11]: https://issues.apache.org/jira/browse/MNG-6863
+[12]: https://issues.apache.org/jira/browse/MNG-6118
+[13]: https://maarten.mulders.it/2020/11/whats-new-in-maven-4/
+[14]: https://issues.apache.org/jira/browse/MNG-6754
+[15]: https://issues.apache.org/jira/browse/MNG-7038
+[16]: https://github.com/apache/maven/pull/1061
