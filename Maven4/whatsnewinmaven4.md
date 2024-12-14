@@ -1,6 +1,6 @@
 # What's new in Maven 4?
 
-> **THIS IS A DRAFT AND THEREFOR WORK IN PROGRESS ARTCILE**
+> **THIS IS A DRAFT AND THEREFOR WORK IN PROGRESS ARTICLE**
 
 Maven is more than 20 years old and is one of the most used build-tool in the Java world.
 Since all the years one important rule was the highest backward-compatibility as possible, especially with its [POM-schema with Model version 4.0.0][2], used for the build itself, but also by consumers.
@@ -37,7 +37,6 @@ This version introduces some new elements and attributs, while others got marked
 To not break the ecosystem ist version is only available for the Build-POM, while the Consumer-POM will still use version 4.0.0.
 
 ### Modules are now subprojects
-
 From the early days of Maven 1 till today, all build information are stored in the POM, short for "Project Object Model".
 Together with build folders and other files the wording "Maven project" is used.
 However, project containing multiple parts, e.g. an API and a client, each of those parts was called "module" and listed in the `<modules>` section of the POM, leading to the terms of "multi-module project".
@@ -53,7 +52,6 @@ While the new type is only available with model Version 4.1.0 the final outcome 
 For an example see the link above or the [live coding by Maven maintainer Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
 
 ### Comparing Build-POM and Consumer-POM
-
 The following table shows a rough comparison about which content is available in which POM type when using Maven 4.
 
 **Notes**:
@@ -83,11 +81,11 @@ Another pain point in relation of the root directly is that until Maven 4 there 
 Maven 4 now provides official variables to reference the root directory in your POM configuration.
 The following table shows the official variables.
 
-|          Variable          |  Scope  | Definition                                                            | Always |
-|:--------------------------|:-------:|:----------------------------------------------------------------------|:-------------:|
-| `${project.rootDirectory}` | Project | `.mvn` folder or `root` attribute in pom                              |      No       |
-| `${session.topDirectory}`  | Session | Current directory or `--file` argument                                |      Yes      |
-| `${session.rootDirectory}` | Session | `.mvn` folder or `root` attribute in pom for the `topDirecty` project |      No       |
+| Variable                   |  Scope  | Definition                                                              | Always |
+|:---------------------------|:-------:|:------------------------------------------------------------------------|:------:|
+| `${project.rootDirectory}` | Project | `.mvn` folder or `root` attribute in pom                                |   No   |
+| `${session.topDirectory}`  | Session | Current directory or `--file` argument                                  |  Yes   |
+| `${session.rootDirectory}` | Session | `.mvn` folder or `root` attribute in pom for the `topDirectory` project |   No   |
 
 As you can see these variables differentiate by their scope, where `project` is always related to the Maven project's definition (you could interpret this as the POM files) and `session` is the actual execution of a maven build and is therefore related to the folder from where you start Maven.
 As a consequence of the definition it's clear that the `rootDirectory` can only contain a value when either a `.mvn` folder is defined or the `root` attribute is set to true.
@@ -100,7 +98,7 @@ Starting with Maven 4 those "hacks" will most probably not work anymore, because
 See JIRA issue [MNG-7038][15] and the related [Pull Request for MNG-7038][16] for more information.
 
 
-## Improvements for subprojects 
+## Improvements for subprojects
 
 ### Automatic versioning
 Maven 4 finally ships one of the oldest improvement requests - automatic parent versioning ([MNG-624][17], created in July 2005 and originally planed for Maven 2)!
@@ -210,7 +208,6 @@ See the following snippet for an example:
 ```
 
 ## Maven plugins and dependencies
-
 As written in the introduction, Maven 4 will contain huge code and API updates (not only because Java 17 language features can be used) and even removals, resulting in breaking very old Maven plugins, which were not updated to the recommended APIs.
 For example the "Plexus Containers" dependency was removed - after being deprecated since Maven 3.2 (2010)!
 
@@ -219,9 +216,9 @@ If you are maintaining a Maven plugin, you should test it with Maven 3.9.x and h
 
 
 # Issue overview
-
 The Maven issue tracker provides a [full list of all resolved issues of Maven 4.0.0][22].
-If you want to see issues resolved in the single releases, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
+As of 2024-12-14 not all issues are properly linked to the final release and therefore may not be shown in that list.
+If you want to see issues resolved in each single (alpha/beta/RC) release, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
 
 
 
