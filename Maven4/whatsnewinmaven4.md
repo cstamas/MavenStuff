@@ -50,7 +50,7 @@ Model version 4.1.0 contains a new element `<subprojects>`analogous to the now d
 ### New packaging type: bom
 Maven 4 introduces a dedicated packaging type to provide a [Bill of Material BOM][4] called "bom".
 While the new type is only available with model Version 4.1.0 the final outcome is a full Maven 3 compatible (model 4.0.0) POM file!
-For an example see the link above or the [live coding by Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
+For an example see the link above or the [live coding by Maven maintainer Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
 
 ### Comparing Build-POM and Consumer-POM
 
@@ -60,16 +60,15 @@ The following table shows a rough comparison about which content is available in
 * The column "Consumer-POM" obviously does not apply for artefacts that are of type "pom" or "bom"!
 * Some of the build-related content which is (as of now) still available in the Consumer-POM might be available only in the Build-POM in the future. 
 
-| Content                                                 | Build-POM | Consumer-POM |
-|:--------------------------------------------------------|:---------:|:------------:|
-| Model version                                           |   4.1.0   |    4.0.0     |
-| Full qualified parent subproject dependency information |     ❌     |      ❌       |
-| 3rd party dependency information                        |     ✅     |      ✅       |
-| Properties                                              |     ✅     |      ❌       |
-| Plugin configuration                                    |     ✅     |      ❌       |
-| Repository information                                  |     ✅     |      ✅       |
-| Project information / environment settings              |     ✅     |      ✅       |
-| Deployment to remote repository                         |     ✅     |      ✅       |
+| Content                                                              | Build-POM | Consumer-POM |
+|:---------------------------------------------------------------------|:---------:|:------------:|
+| Model version                                                        |   4.1.0   |    4.0.0     |
+| 3rd party dependency information                                     |     ✅     |      ✅       |
+| Properties                                                           |     ✅     |      ❌       |
+| Plugin configuration                                                 |     ✅     |      ❌       |
+| Repository information                                               |     ✅     |      ✅       |
+| Project information / environment settings                           |     ✅     |      ✅       |
+| Deployment to remote repository                                      |     ✅     |      ✅       |
 
 
 ### Declaring the root directory and directory variables
@@ -103,20 +102,59 @@ See JIRA issue [MNG-7038][15] and the related [Pull Request for MNG-7038][16] fo
 
 ## Improvements for subprojects 
 
-### Automatic versioning of parents and subprojects
+### Automatic versioning
+Maven 4 finally ships one of the oldest improvement requests - automatic parent versioning ([MNG-624][17], created in July 2005 and originally planed for Maven 2)!
+As expected it's no longer required to define the parent versions in each subproject, when using the new model version 4.1.0.
+This is also extended to dependencies of project own subprojects and reduces the need to update POM files for new versions even more!
 
+The following code snippet shows the parents and dependency definition without the version tag.
+```xml
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
+    
+    <parent>
+      <groupId>my.parents.groupId</groupId>
+      <artifactId>my.parents.artifactId</artifactId>
+    </parent>
+    
+    <artifactId>myOwnSubprojectArtifactId</artifactId>
+    
+    <dependencies>
+        <dependency>
+         <groupId>the.dependent.subproject.groupId</groupId>
+         <artifactId>the.dependent.subproject.artifactId</artifactId>
+      </dependency>
+    </dependencies>
+</project>
+```
+
+### Full support of CI-friendly variables
+Maven 3.5.0 introduced partly supported usage of CI-friendly variables, e.g. `${revision}`, in your POM files.
+However, this still required the usage of the [Flatten Maven Plugin][20] for full functionality.
+Since Maven 4 no additional plugin is needed anymore, but full build-in support is provided.
+You can now use variables as versions in your configuration, e.g.
+
+```xml
+<groupId>my.groupId</groupId>
+<artifactId>my.artifactId</artifactId>
+<version>${revision}</version>
+```
+Of course, you have to provide a value for this variable when starting the build, for example by a `maven.config` file or as a parameter, e.g. `mvn verify -Drevision=4.0.1`, which is commonly done in CI pipelines. 
+
+Maven maintainer Karl Heinz Marbaise shows a larger example in his [article "Maven 4 - Part I - Easier Versions"][21].
 
 ### Reactor improvements and fixes
 Building a project with multiple subprojects could cause trouble when one subproject was dependent from one of the others and its own build failed for whatever reason.
 Maven was telling the user to (fix the error and then) resume the build with `--resume-from :<nameOfTheFailingSubproject>`, which instantly fails the build again as the needed other subproject couldn't be found (as it was not rebuild too).
-Using `--also-make :<nameOfTheDependendSubproject>` was no help in the past as it was ignored due the ma long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
+Using `--also-make :<nameOfTheDependentSubproject>` was no help in the past as it was ignored due the ma long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
 **So the "argument" to blindly use `mvn clean install` as a "workaround" for this (never intended) behavior is gone!
 Don't use `mvn clean install`, but `mvn verify` for your regular builds!**
 To improve usability when resuming a failed build you can now use `--resume` or its short parameter `-r` to resume a build from the subproject that last failed.
 So you don't have to manually pass the name of the failed subproject as the starting point to resume from.
 The reactor is now also aware of successfully build subprojects when the overall build failed, and will skip to rebuild those if you resume the build.  
 With Maven 4 it's also aware of subfolder builds [MNG-6118][12], which becomes pretty handy when you only want to execute tools (e.g. Jetty) on/with certain subprojects, but not on every subproject.
-See Maven maintainer Maarten Mulders' article ["Waht's new in maven 4" (2020)][13] for a small example.
+See Maven maintainer Maarten Mulders's article ["What's new in maven 4" (2020)][13] for a small example.
 
 ### Further improvements
 Further improvements to subprojects will also improve the daily work with those.
@@ -127,30 +165,49 @@ This was finally changed in Maven 4 to the way most users are expecting:
 Only deploy when all subprojects were build successfully.
 
 
-
-
-
-
 ## Workflow and runtime changes
 
 ### Java 17 required to run Maven
 The required Java version to run Maven 4 will be Java 17 
 This allows Maven (and its maintainers) to make use of newer language features and improvements brought by the JDK.
 
-
 **Important note**: Java 17 will only be needed to **run Maven**!
 You will still be able to compile against older Java versions using the same [compiler plugin configuration][6] as before!
 If this does not fit your requirements, because you need to compile against or using another JDK, please have a look at the [Guide to Using Toolchains][7] (or the article [Introduction to Maven Toolchains][8] by Maven maintainer Maarten Mulders).
 
 *Side information: The ballot about the required Java version was hold in March 2024, shortly before Java 22 was released.
-Java 17 was chosen over Java 21, because it was (at this time) the second last Java version for which many vendors offer long-term-support.*
+One reason Java 17 was chosen over Java 21, because it was (at this time) the second last Java version for which many vendors offer long-term-support.*
 
-## "Fail on severity" parameter
+### "Fail on severity" parameter
 Maven 4 introduces a "fail on severity" build parameter, which will break the build when at least one log message matches the given argument.
 
 The parameter can either be used by its full name (`--fail-on-severity`) or as a short handle (`-fos`).
 The parameter is followed by an argument of a log level severity, e.g. `WARN`.
 
+### Optional profiles
+Trying to use a nonexistent profile in a build causes the build to fail, as the following command line snippet shows:
+
+```
+> mvn compile -Pnonexistent
+[ERROR] The requested profiles [nonexistent] could not be activated or deactivated because they do not exist.
+```
+
+Maven 4 introduces the possibility to only use profiles when they exist.
+To do so the `?` argument was added to the profile parameter.
+When using this the build won't break, but an information will be printed twice (at the start and the end).
+See the following snippet for an example:
+
+```
+> mvn compile -P?nonexistent
+[INFO] The requested optional profiles [nonexistent] could not be activated or deactivated because they do not exist.
+[...]
+[INFO] BUILD SUCCESS
+[INFO] ----------------------------------------------------------------------------------------------------------------
+[INFO] Total time:  0.746 s
+[INFO] Finished at: 2024-12-14T13:24:15+01:00
+[INFO] ----------------------------------------------------------------------------------------------------------------
+[INFO] The requested optional profiles [nonexistent] could not be activated or deactivated because they do not exist.
+```
 
 ## Maven plugins and dependencies
 
@@ -163,16 +220,8 @@ If you are maintaining a Maven plugin, you should test it with Maven 3.9.x and h
 
 # Issue overview
 
-The following table shows links to the issues of changes, mentioned here.
-For a full list of all issues, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
-
-
-TODO.
-
-| Topic           | JIRA-Issue |
-|:----------------|:---------:|
-|Build-POM and Consumer-POM|xx|
-| Require Java 17 |[MNG-8061][9]|
+The Maven issue tracker provides a [full list of all resolved issues of Maven 4.0.0][22].
+If you want to see issues resolved in the single releases, please see the [Maven releases history][10], starting with the alpha versions for Maven 4.0.0.
 
 
 
@@ -196,3 +245,9 @@ TODO.
 [14]: https://issues.apache.org/jira/browse/MNG-6754
 [15]: https://issues.apache.org/jira/browse/MNG-7038
 [16]: https://github.com/apache/maven/pull/1061
+[17]: https://issues.apache.org/jira/browse/MNG-624
+[18]: https://issues.apache.org/jira/browse/MNG-6656
+[19]: https://issues.apache.org/jira/browse/MNG-7051
+[20]: https://www.mojohaus.org/flatten-maven-plugin/
+[21]: https://blog.soebes.io/posts/2024/03/2024-03-31-maven-4-part-i/
+[22]: https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12316922&version=12346477
