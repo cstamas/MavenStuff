@@ -58,15 +58,15 @@ The following table shows a rough comparison about which content is available in
 * The column "Consumer-POM" obviously does not apply for artefacts that are of type "pom" or "bom"!
 * Some of the build-related content which is (as of now) still available in the Consumer-POM might be available only in the Build-POM in the future. 
 
-| Content                                                              | Build-POM | Consumer-POM |
-|:---------------------------------------------------------------------|:---------:|:------------:|
-| Model version                                                        |   4.1.0   |    4.0.0     |
-| 3rd party dependency information                                     |     ✅     |      ✅       |
-| Properties                                                           |     ✅     |      ❌       |
-| Plugin configuration                                                 |     ✅     |      ❌       |
-| Repository information                                               |     ✅     |      ✅       |
-| Project information / environment settings                           |     ✅     |      ✅       |
-| Deployment to remote repository                                      |     ✅     |      ✅       |
+| Content                                    | Build-POM | Consumer-POM |
+|:-------------------------------------------|:---------:|:------------:|
+| Model version                              |   4.1.0   |    4.0.0     |
+| 3rd party dependency information           |     ✅     |      ✅       |
+| Properties                                 |     ✅     |      ❌       |
+| Plugin configuration                       |     ✅     |      ❌       |
+| Repository information                     |     ✅     |      ✅       |
+| Project information / environment settings |     ✅     |      ✅       |
+| Deployment to remote repository            |     ✅     |      ✅       |
 
 
 ### Declaring the root directory and directory variables
@@ -140,19 +140,21 @@ You can now use variables as versions in your configuration, e.g.
 ```
 Of course, you have to provide a value for this variable when starting the build, for example by a `maven.config` file or as a parameter, e.g. `mvn verify -Drevision=4.0.1`, which is commonly done in CI pipelines. 
 
-Maven maintainer Karl Heinz Marbaise shows a larger example in his [article "Maven 4 - Part I - Easier Versions"][21].
+Maven maintainer Karl Heinz Marbaise shows a larger example in his [article "Maven 4 - Part I - Easier Versions" (2024)][21].
 
 ### Reactor improvements and fixes
 Building a project with multiple subprojects could cause trouble when one subproject was dependent from one of the others and its own build failed for whatever reason.
 Maven was telling the user to (fix the error and then) resume the build with `--resume-from :<nameOfTheFailingSubproject>`, which instantly fails the build again as the needed other subproject couldn't be found (as it was not rebuild too).
 Using `--also-make :<nameOfTheDependentSubproject>` was no help in the past as it was ignored due the ma long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
-**So the "argument" to blindly use `mvn clean install` as a "workaround" for this (never intended) behavior is gone!
+
+**So the "reason" to blindly use `mvn clean install` as "workaround" for this (never intended) behavior is no more!
 Don't use `mvn clean install`, but `mvn verify` for your regular builds!**
+
 To improve usability when resuming a failed build you can now use `--resume` or its short parameter `-r` to resume a build from the subproject that last failed.
 So you don't have to manually pass the name of the failed subproject as the starting point to resume from.
 The reactor is now also aware of successfully build subprojects when the overall build failed, and will skip to rebuild those if you resume the build.  
 With Maven 4 it's also aware of subfolder builds [MNG-6118][12], which becomes pretty handy when you only want to execute tools (e.g. Jetty) on/with certain subprojects, but not on every subproject.
-See Maven maintainer Maarten Mulders's article ["What's new in maven 4" (2020)][13] for a small example.
+See Maven maintainer Maarten Mulders's article ["What's New in Maven 4" (2020)][13] for a small example.
 
 ### Further improvements
 Further improvements to subprojects will also improve the daily work with those.
