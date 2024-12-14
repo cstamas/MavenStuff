@@ -1,6 +1,6 @@
 # What's new in Maven 4?
 
-> **THIS IS A DRAFT AND THEREFOR WORK IN PROGRESS ARTICLE**
+> **THIS IS A DRAFT AND THEREFORE WORK IN PROGRESS ARTICLE**
 
 Maven is more than 20 years old and is one of the most used build-tool in the Java world.
 Since all the years one important rule was the highest backward-compatibility as possible, especially with its [POM-schema with Model version 4.0.0][2], used for the build itself, but also by consumers.
@@ -59,6 +59,7 @@ While the new type is only available with model Version 4.1.0 the final outcome 
 For an example see the link above or the [live coding by Maven maintainer Karl Heinz Marbaise at IntelliJ IDEA Conf 2004][5].
 
 **Note**: With Maven 4 it's also possible to exclude dependencies which are declared by BOMs using the existing `<exclusions>` element.
+Also, importing POMs/BOMs with a classifier became possible as well. Users are encouraged to generate BOM POMs.
 
 ### Comparing Build-POM and Consumer-POM
 The following table shows a rough comparison about which content is available in which POM type when using Maven 4.
