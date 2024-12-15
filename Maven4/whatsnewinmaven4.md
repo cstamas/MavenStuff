@@ -32,8 +32,8 @@ This POM will only keep those which are really needed to use the artifact, e.g. 
 ### Model version 4.1.0
 With now having two types of POM Maven 4 can already make the additions to the Build-POM as it will only be used by Maven (and of course IDEs).
 Therefor with Maven 4 a new Model version 4.1.0 is introduced.
-This version introduces some new elements and attributs, while others got marked as deprecated.
-To not break the ecosystem ist version is only available for the Build-POM, while the Consumer-POM will still use version 4.0.0.
+This version introduces some new elements and attributes, while others got marked as deprecated.
+To not break the ecosystem this version is only available for the Build-POM, while the Consumer-POM will still use version 4.0.0.
 This means Maven will generate the Consumer-POM during the build. 
 
 **Note**: Maven 4 will of course continue to build your model version 4.0.0 project!
@@ -42,7 +42,7 @@ But as like every software update - it's suggested to update them to 4.1.0, e.g.
  
 
 ### Modules are now subprojects
-From the early days of Maven 1 till today, all build information are stored in the POM, short for "Project Object Model".
+From the early days of Maven 1 till today, all build information is stored in the POM, short for "Project Object Model".
 Together with build folders and other files the wording "Maven project" is used.
 However, project containing multiple parts, e.g. an API and a client, each of those parts was called "module" and listed in the `<modules>` section of the POM, leading to the terms of "multi-module project".
 This wording introduced some inconsistency, especially as projects with any `<modules>` section are often called "single-module".
@@ -119,7 +119,7 @@ One of the first projects which uses this features is the [Apache Maven Hocon Ex
 ## Improvements for subprojects
 
 ### Automatic versioning
-Maven 4 finally ships one of the oldest improvement requests - automatic parent versioning ([MNG-624][17], created in July 2005 and originally planed for Maven 2)!
+Maven 4 finally ships one of the oldest improvement requests - automatic parent versioning ([MNG-624][17], created in July 2005 and originally planned for Maven 2)!
 As expected it's no longer required to define the parent versions in each subproject, when using the new model version 4.1.0.
 This is also extended to dependencies of project own subprojects and reduces the need to update POM files for new versions even more!
 
@@ -163,7 +163,7 @@ Maven maintainer Karl Heinz Marbaise shows a larger example in his [article "Mav
 ### Reactor improvements and fixes
 Building a project with multiple subprojects could cause trouble when one subproject was dependent from one of the others and its own build failed for whatever reason.
 Maven was telling the user to (fix the error and then) resume the build with `--resume-from :<nameOfTheFailingSubproject>`, which instantly fails the build again as the needed other subproject couldn't be found (as it was not rebuild too).
-Using `--also-make :<nameOfTheDependentSubproject>` was no help in the past as it was ignored due the ma long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
+Using `--also-make :<nameOfTheDependentSubproject>` was no help in the past as it was ignored due the long-stand bug [MNG-6863][11] - which is finally fixed with Maven 4!
 
 **So the "reason" to blindly use `mvn clean install` as "workaround" for this (never intended) behavior is no more!
 Don't use `mvn clean install`, but `mvn verify` for your regular builds!**
@@ -176,7 +176,7 @@ See Maven maintainer Maarten Mulders's article ["What's New in Maven 4" (2020)][
 
 ### Further improvements
 Further improvements to subprojects will also improve the daily work with those.
-Thanks to [MNG-6754][14] all subprojects will now have consistent timestamps in there packaged archives, while in Maven 3 each subproject was having a different one.
+Thanks to [MNG-6754][14] all subprojects will now have consistent timestamps in their packaged archives, while in Maven 3 each subproject was having a different one.
 This should make it easier to identify the archives which belong together.
 When using Maven 3, deploying a project with multiple subprojects could end up in the situation where some (successfully build) subprojects where deployed to the (local or remote) repository, but failed subprojects were obviously not.
 This was finally changed in Maven 4 to the way most users are expecting:
